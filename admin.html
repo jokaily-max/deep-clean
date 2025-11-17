@@ -1,0 +1,1020 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Deep Clean - Admin Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: #f5f5f5;
+            padding: 20px;
+        }
+        
+        .login-container {
+            max-width: 400px;
+            margin: 100px auto;
+            background: white;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+        
+        .login-container h1 {
+            text-align: center;
+            color: #1e5a96;
+            margin-bottom: 30px;
+        }
+        
+        .login-container input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 6px;
+            margin-bottom: 15px;
+            font-size: 15px;
+        }
+        
+        .login-container button {
+            width: 100%;
+            padding: 12px;
+            background: #1e5a96;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+        
+        .login-container button:hover {
+            background: #0d3d66;
+        }
+        
+        .error-message {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 10px;
+            border-radius: 6px;
+            margin-bottom: 15px;
+            font-size: 14px;
+        }
+        
+        .dashboard {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            background: white;
+            padding: 20px 30px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+        
+        .header h1 {
+            color: #1e5a96;
+        }
+        
+        .header-actions {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .btn {
+            padding: 10px 20px;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 14px;
+        }
+        
+        .btn-danger { background: #dc3545; }
+        .btn-success { background: #28a745; }
+        .btn-primary { background: #007bff; }
+        .btn-info { background: #17a2b8; }
+        
+        .btn:hover { opacity: 0.9; }
+        
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .tab {
+            padding: 12px 24px;
+            background: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 15px;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+        
+        .tab.active {
+            background: #1e5a96;
+            color: white;
+        }
+        
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+        
+        .stat-card h3 {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 8px;
+        }
+        
+        .stat-card .value {
+            color: #1e5a96;
+            font-size: 28px;
+            font-weight: 700;
+        }
+        
+        .orders-container {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+        
+        .order-card {
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 15px;
+            transition: all 0.2s;
+        }
+        
+        .order-card:hover {
+            border-color: #1e5a96;
+            box-shadow: 0 4px 15px rgba(30, 90, 150, 0.1);
+        }
+        
+        .order-card.new-order {
+            border-color: #28a745;
+            background: #f0fff4;
+        }
+        
+        .order-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 15px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+        
+        .customer-info h3 {
+            color: #1e5a96;
+            margin-bottom: 5px;
+        }
+        
+        .customer-info p {
+            color: #666;
+            font-size: 14px;
+            margin: 3px 0;
+        }
+        
+        .order-number {
+            background: #1e5a96;
+            color: white;
+            padding: 5px 12px;
+            border-radius: 6px;
+            font-weight: 700;
+            display: inline-block;
+            margin-bottom: 8px;
+        }
+        
+        .order-total {
+            text-align: right;
+        }
+        
+        .order-total .label {
+            color: #666;
+            font-size: 13px;
+        }
+        
+        .order-total .amount {
+            color: #1e5a96;
+            font-size: 24px;
+            font-weight: 700;
+        }
+        
+        .order-items {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+        }
+        
+        .item-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        
+        .item-row:last-child {
+            border-bottom: none;
+        }
+        
+        .status-checkboxes {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        
+        .checkbox-label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            padding: 8px 12px;
+            border-radius: 6px;
+            transition: background 0.2s;
+        }
+        
+        .checkbox-label:hover {
+            background: #f0f0f0;
+        }
+        
+        .checkbox-label input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+        }
+        
+        .checkbox-label.purchased {
+            color: #0066cc;
+        }
+        
+        .checkbox-label.delivered {
+            color: #28a745;
+        }
+        
+        .checkbox-label.paid {
+            color: #ffc107;
+        }
+        
+        .inventory-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        .inventory-table th,
+        .inventory-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        
+        .inventory-table th {
+            background: #f8f9fa;
+            color: #1e5a96;
+            font-weight: 600;
+            position: sticky;
+            top: 0;
+        }
+        
+        .inventory-table tr:hover {
+            background: #f8f9fa;
+        }
+        
+        .search-box {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 15px;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+        
+        .filter-buttons {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .filter-btn {
+            padding: 8px 16px;
+            background: white;
+            border: 2px solid #ddd;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .filter-btn.active {
+            background: #1e5a96;
+            color: white;
+            border-color: #1e5a96;
+        }
+        
+        .notes-section {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 2px solid #f0f0f0;
+        }
+        
+        .notes-textarea {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #ddd;
+            border-radius: 6px;
+            margin-top: 8px;
+            font-size: 14px;
+            resize: vertical;
+        }
+        
+        .btn-small {
+            padding: 6px 12px;
+            font-size: 13px;
+        }
+        
+        @media (max-width: 768px) {
+            .order-header {
+                flex-direction: column;
+            }
+            
+            .order-total {
+                text-align: left;
+                margin-top: 10px;
+            }
+            
+            .status-checkboxes {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .stats {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        // Configuration - REPLACE WITH YOUR VALUES
+        const CONFIG = {
+            SUPABASE_URL: 'https://okbevpzlidfnizveqiui.supabase.co',
+            SUPABASE_ANON_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9rYmV2cHpsaWRmbml6dmVxaXVpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjMzNTQ5NjYsImV4cCI6MjA3ODkzMDk2Nn0.S1qk8T1ZAqGuPvcd9HKFio1-YBSZzCgBgMOlCEp98-4',
+            ADMIN_PASSWORD: 'anmanoja', // CHANGE THIS!
+            SESSION_TIMEOUT: 3600000 // 1 hour
+        };
+
+        // Initialize Supabase (FIXED)
+        const { createClient } = supabase;
+        const supabaseClient = createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY);
+
+        function AdminDashboard() {
+            const [isLoggedIn, setIsLoggedIn] = useState(false);
+            const [password, setPassword] = useState('');
+            const [loginError, setLoginError] = useState('');
+            const [orders, setOrders] = useState([]);
+            const [loading, setLoading] = useState(false);
+            const [activeTab, setActiveTab] = useState('orders');
+            const [searchTerm, setSearchTerm] = useState('');
+            const [filter, setFilter] = useState('all');
+            const [editingNotes, setEditingNotes] = useState({});
+            const [internalNotes, setInternalNotes] = useState({});
+
+            useEffect(() => {
+                // Check session
+                const session = localStorage.getItem('adminSession');
+                if (session) {
+                    const { timestamp } = JSON.parse(session);
+                    if (Date.now() - timestamp < CONFIG.SESSION_TIMEOUT) {
+                        setIsLoggedIn(true);
+                    } else {
+                        localStorage.removeItem('adminSession');
+                    }
+                }
+            }, []);
+
+            useEffect(() => {
+                if (isLoggedIn) {
+                    loadOrders();
+                    
+                    // Subscribe to real-time changes
+                    const ordersSubscription = supabaseClient
+                        .channel('orders_channel')
+                        .on('postgres_changes', 
+                            { event: '*', schema: 'public', table: 'orders' },
+                            (payload) => {
+                                console.log('Order change:', payload);
+                                loadOrders();
+                            }
+                        )
+                        .subscribe();
+
+                    // Auto-refresh every 30 seconds
+                    const interval = setInterval(loadOrders, 30000);
+
+                    return () => {
+                        supabaseClient.removeChannel(ordersSubscription);
+                        clearInterval(interval);
+                    };
+                }
+            }, [isLoggedIn]);
+
+            const loadOrders = async () => {
+                setLoading(true);
+                try {
+                    const { data: ordersData, error: ordersError } = await supabaseClient
+                        .from('orders')
+                        .select(`
+                            *,
+                            order_items (*)
+                        `)
+                        .order('created_at', { ascending: false });
+
+                    if (ordersError) throw ordersError;
+                    
+                    setOrders(ordersData || []);
+                    
+                    // Load internal notes
+                    const notes = {};
+                    ordersData.forEach(order => {
+                        if (order.internal_notes) {
+                            notes[order.id] = order.internal_notes;
+                        }
+                    });
+                    setInternalNotes(notes);
+                } catch (err) {
+                    console.error('Error loading orders:', err);
+                } finally {
+                    setLoading(false);
+                }
+            };
+
+            const handleLogin = (e) => {
+                e.preventDefault();
+                setLoginError('');
+                
+                if (password === CONFIG.ADMIN_PASSWORD) {
+                    setIsLoggedIn(true);
+                    localStorage.setItem('adminSession', JSON.stringify({
+                        timestamp: Date.now()
+                    }));
+                } else {
+                    setLoginError('Incorrect password');
+                }
+            };
+
+            const handleLogout = () => {
+                setIsLoggedIn(false);
+                setPassword('');
+                localStorage.removeItem('adminSession');
+            };
+
+            const updateOrderStatus = async (orderId, statusType, currentValue) => {
+                const statusField = `status_${statusType}`;
+                
+                try {
+                    const { error } = await supabaseClient
+                        .from('orders')
+                        .update({ [statusField]: !currentValue })
+                        .eq('id', orderId);
+
+                    if (error) throw error;
+                    
+                    loadOrders();
+                } catch (err) {
+                    console.error('Error updating status:', err);
+                    alert('Failed to update status');
+                }
+            };
+
+            const saveInternalNotes = async (orderId) => {
+                try {
+                    const { error } = await supabaseClient
+                        .from('orders')
+                        .update({ internal_notes: internalNotes[orderId] || '' })
+                        .eq('id', orderId);
+
+                    if (error) throw error;
+                    
+                    setEditingNotes(prev => ({ ...prev, [orderId]: false }));
+                    alert('Notes saved!');
+                } catch (err) {
+                    console.error('Error saving notes:', err);
+                    alert('Failed to save notes');
+                }
+            };
+
+            const deleteOrder = async (orderId) => {
+                if (!confirm('Are you sure you want to delete this order? This cannot be undone.')) {
+                    return;
+                }
+
+                try {
+                    const { error: itemsError } = await supabaseClient
+                        .from('order_items')
+                        .delete()
+                        .eq('order_id', orderId);
+
+                    if (itemsError) throw itemsError;
+
+                    const { error: orderError } = await supabaseClient
+                        .from('orders')
+                        .delete()
+                        .eq('id', orderId);
+
+                    if (orderError) throw orderError;
+
+                    loadOrders();
+                } catch (err) {
+                    console.error('Error deleting order:', err);
+                    alert('Failed to delete order');
+                }
+            };
+
+            const formatPrice = (price) => {
+                return new Intl.NumberFormat('en-US').format(price) + ' LL';
+            };
+
+            const formatDate = (dateString) => {
+                return new Date(dateString).toLocaleDateString('en-US', {
+                    year: 'numeric',
+                    month: 'short',
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+            };
+
+            const sendWhatsApp = (order) => {
+                const orderNum = `DC-${order.id.toString().padStart(6, '0')}`;
+                let message = `*Order ${orderNum}*%0A%0A`;
+                message += `*Customer:* ${order.customer_name}%0A`;
+                message += `*Phone:* ${order.phone_number}%0A`;
+                message += `*Address:* ${order.delivery_address}%0A`;
+                message += `*Delivery:* ${order.delivery_date}%0A%0A`;
+                message += `*Items:*%0A`;
+                order.order_items.forEach(item => {
+                    message += `• ${item.product_name} x${item.quantity} - ${formatPrice(item.subtotal)}%0A`;
+                });
+                message += `%0A*Total: ${formatPrice(order.total_amount)}*`;
+                
+                const phone = order.phone_number.replace(/\s/g, '');
+                window.open(`https://wa.me/961${phone}?text=${message}`, '_blank');
+            };
+
+            const callCustomer = (phoneNumber) => {
+                window.location.href = `tel:${phoneNumber}`;
+            };
+
+            const getInventorySummary = () => {
+                const inventory = {};
+                orders.forEach(order => {
+                    if (!order.status_purchased) {
+                        order.order_items.forEach(item => {
+                            if (!inventory[item.product_id]) {
+                                inventory[item.product_id] = {
+                                    name: item.product_name,
+                                    description: item.description,
+                                    quantity: 0,
+                                    price: item.price
+                                };
+                            }
+                            inventory[item.product_id].quantity += item.quantity;
+                        });
+                    }
+                });
+                return Object.values(inventory).sort((a, b) => b.quantity - a.quantity);
+            };
+
+            const getStats = () => {
+                const totalOrders = orders.length;
+                const totalRevenue = orders.reduce((sum, order) => sum + order.total_amount, 0);
+                const pendingOrders = orders.filter(o => !o.status_delivered).length;
+                const paidOrders = orders.filter(o => o.status_paid).length;
+                const unpaidAmount = orders.filter(o => !o.status_paid).reduce((sum, order) => sum + order.total_amount, 0);
+                const todayOrders = orders.filter(o => {
+                    const orderDate = new Date(o.created_at);
+                    const today = new Date();
+                    return orderDate.toDateString() === today.toDateString();
+                }).length;
+                
+                return { totalOrders, totalRevenue, pendingOrders, paidOrders, unpaidAmount, todayOrders };
+            };
+
+            const exportToCSV = () => {
+                let csv = 'Order Number,Customer Name,Phone,Address,Delivery Date,Items,Total,Purchased,Delivered,Paid,Order Date,Internal Notes\n';
+                
+                orders.forEach(order => {
+                    const orderNum = `DC-${order.id.toString().padStart(6, '0')}`;
+                    const items = order.order_items.map(i => `${i.product_name} x${i.quantity}`).join('; ');
+                    const notes = (order.internal_notes || '').replace(/"/g, '""');
+                    csv += `"${orderNum}","${order.customer_name}","${order.phone_number}","${order.delivery_address}","${order.delivery_date}","${items}","${order.total_amount}","${order.status_purchased}","${order.status_delivered}","${order.status_paid}","${formatDate(order.created_at)}","${notes}"\n`;
+                });
+
+                const blob = new Blob([csv], { type: 'text/csv' });
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `deep-clean-orders-${new Date().toISOString().split('T')[0]}.csv`;
+                a.click();
+            };
+
+            const getFilteredOrders = () => {
+                let filtered = orders;
+
+                if (searchTerm) {
+                    filtered = filtered.filter(order => 
+                        order.customer_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                        order.phone_number.includes(searchTerm) ||
+                        order.delivery_address.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                        `DC-${order.id.toString().padStart(6, '0')}`.toLowerCase().includes(searchTerm.toLowerCase())
+                    );
+                }
+
+                if (filter !== 'all') {
+                    switch(filter) {
+                        case 'pending':
+                            filtered = filtered.filter(o => !o.status_delivered);
+                            break;
+                        case 'delivered':
+                            filtered = filtered.filter(o => o.status_delivered);
+                            break;
+                        case 'unpaid':
+                            filtered = filtered.filter(o => !o.status_paid);
+                            break;
+                        case 'paid':
+                            filtered = filtered.filter(o => o.status_paid);
+                            break;
+                    }
+                }
+
+                return filtered;
+            };
+
+            if (!isLoggedIn) {
+                return (
+                    <div className="login-container">
+                        <h1>🔒 Deep Clean Admin</h1>
+                        {loginError && <div className="error-message">{loginError}</div>}
+                        <form onSubmit={handleLogin}>
+                            <input 
+                                type="password" 
+                                placeholder="Enter admin password"
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
+                                autoFocus
+                            />
+                            <button type="submit">Login</button>
+                        </form>
+                        <p style={{marginTop: '20px', fontSize: '12px', color: '#666', textAlign: 'center'}}>
+                            Default password: anmanoja
+                        </p>
+                    </div>
+                );
+            }
+
+            const stats = getStats();
+            const inventory = getInventorySummary();
+            const filteredOrders = getFilteredOrders();
+
+            return (
+                <div className="dashboard">
+                    <div className="header">
+                        <h1>Deep Clean - Admin Dashboard</h1>
+                        <div className="header-actions">
+                            <button onClick={loadOrders} className="btn btn-success">🔄 Refresh</button>
+                            <button onClick={handleLogout} className="btn btn-danger">Logout</button>
+                        </div>
+                    </div>
+
+                    <div className="stats">
+                        <div className="stat-card">
+                            <h3>Today's Orders</h3>
+                            <div className="value">{stats.todayOrders}</div>
+                        </div>
+                        <div className="stat-card">
+                            <h3>Total Orders</h3>
+                            <div className="value">{stats.totalOrders}</div>
+                        </div>
+                        <div className="stat-card">
+                            <h3>Total Revenue</h3>
+                            <div className="value">{formatPrice(stats.totalRevenue)}</div>
+                        </div>
+                        <div className="stat-card">
+                            <h3>Pending Delivery</h3>
+                            <div className="value">{stats.pendingOrders}</div>
+                        </div>
+                        <div className="stat-card">
+                            <h3>Paid Orders</h3>
+                            <div className="value">{stats.paidOrders}</div>
+                        </div>
+                        <div className="stat-card">
+                            <h3>Unpaid Amount</h3>
+                            <div className="value">{formatPrice(stats.unpaidAmount)}</div>
+                        </div>
+                    </div>
+
+                    <div className="tabs">
+                        <button 
+                            className={`tab ${activeTab === 'orders' ? 'active' : ''}`}
+                            onClick={() => setActiveTab('orders')}
+                        >
+                            📋 All Orders ({orders.length})
+                        </button>
+                        <button 
+                            className={`tab ${activeTab === 'inventory' ? 'active' : ''}`}
+                            onClick={() => setActiveTab('inventory')}
+                        >
+                            📦 Shopping List ({inventory.length})
+                        </button>
+                    </div>
+
+                    {activeTab === 'orders' && (
+                        <div className="orders-container">
+                            <div style={{display: 'flex', gap: '10px', marginBottom: '20px', flexWrap: 'wrap'}}>
+                                <input 
+                                    type="text"
+                                    className="search-box"
+                                    style={{flex: 1, margin: 0}}
+                                    placeholder="🔍 Search by name, phone, address, or order number..."
+                                    value={searchTerm}
+                                    onChange={(e) => setSearchTerm(e.target.value)}
+                                />
+                                <button onClick={exportToCSV} className="btn btn-success">
+                                    📥 Export CSV
+                                </button>
+                            </div>
+
+                            <div className="filter-buttons">
+                                <button 
+                                    className={`filter-btn ${filter === 'all' ? 'active' : ''}`}
+                                    onClick={() => setFilter('all')}
+                                >
+                                    All Orders
+                                </button>
+                                <button 
+                                    className={`filter-btn ${filter === 'pending' ? 'active' : ''}`}
+                                    onClick={() => setFilter('pending')}
+                                >
+                                    Pending Delivery
+                                </button>
+                                <button 
+                                    className={`filter-btn ${filter === 'delivered' ? 'active' : ''}`}
+                                    onClick={() => setFilter('delivered')}
+                                >
+                                    Delivered
+                                </button>
+                                <button 
+                                    className={`filter-btn ${filter === 'unpaid' ? 'active' : ''}`}
+                                    onClick={() => setFilter('unpaid')}
+                                >
+                                    Unpaid
+                                </button>
+                                <button 
+                                    className={`filter-btn ${filter === 'paid' ? 'active' : ''}`}
+                                    onClick={() => setFilter('paid')}
+                                >
+                                    Paid
+                                </button>
+                            </div>
+
+                            {loading ? (
+                                <div className="loading">Loading orders...</div>
+                            ) : filteredOrders.length === 0 ? (
+                                <p style={{textAlign: 'center', padding: '40px', color: '#666'}}>
+                                    No orders found
+                                </p>
+                            ) : (
+                                filteredOrders.map(order => {
+                                    const orderNum = `DC-${order.id.toString().padStart(6, '0')}`;
+                                    const isNew = new Date() - new Date(order.created_at) < 3600000;
+                                    
+                                    return (
+                                        <div key={order.id} className={`order-card ${isNew ? 'new-order' : ''}`}>
+                                            <div className="order-header">
+                                                <div className="customer-info">
+                                                    <div className="order-number">{orderNum}</div>
+                                                    <h3>{order.customer_name}</h3>
+                                                    <p>📱 {order.phone_number}</p>
+                                                    <p>📍 {order.delivery_address}</p>
+                                                    <p>📅 Delivery: {order.delivery_date}</p>
+                                                    {order.notes && <p>📝 Customer Note: {order.notes}</p>}
+                                                    <p style={{fontSize: '12px', color: '#999', marginTop: '8px'}}>
+                                                        Ordered: {formatDate(order.created_at)}
+                                                    </p>
+                                                </div>
+                                                <div className="order-total">
+                                                    <div className="label">Total Amount</div>
+                                                    <div className="amount">{formatPrice(order.total_amount)}</div>
+                                                </div>
+                                            </div>
+
+                                            <div className="order-items">
+                                                <strong style={{marginBottom: '10px', display: 'block'}}>
+                                                    Items Ordered ({order.order_items.length}):
+                                                </strong>
+                                                {order.order_items.map((item, idx) => (
+                                                    <div key={idx} className="item-row">
+                                                        <span>
+                                                            {item.product_name} 
+                                                            {item.description && ` (${item.description})`}
+                                                        </span>
+                                                        <span>x{item.quantity} = {formatPrice(item.subtotal)}</span>
+                                                    </div>
+                                                ))}
+                                            </div>
+
+                                            <div className="status-checkboxes">
+                                                <label className="checkbox-label purchased">
+                                                    <input 
+                                                        type="checkbox"
+                                                        checked={order.status_purchased}
+                                                        onChange={() => updateOrderStatus(order.id, 'purchased', order.status_purchased)}
+                                                    />
+                                                    <span>✓ Purchased</span>
+                                                </label>
+                                                <label className="checkbox-label delivered">
+                                                    <input 
+                                                        type="checkbox"
+                                                        checked={order.status_delivered}
+                                                        onChange={() => updateOrderStatus(order.id, 'delivered', order.status_delivered)}
+                                                    />
+                                                    <span>✓ Delivered</span>
+                                                </label>
+                                                <label className="checkbox-label paid">
+                                                    <input 
+                                                        type="checkbox"
+                                                        checked={order.status_paid}
+                                                        onChange={() => updateOrderStatus(order.id, 'paid', order.status_paid)}
+                                                    />
+                                                    <span>✓ Paid</span>
+                                                </label>
+                                                <button 
+                                                    className="btn btn-primary btn-small"
+                                                    onClick={() => callCustomer(order.phone_number)}
+                                                >
+                                                    📞 Call
+                                                </button>
+                                                <button 
+                                                    className="btn btn-success btn-small"
+                                                    onClick={() => sendWhatsApp(order)}
+                                                >
+                                                    💬 WhatsApp
+                                                </button>
+                                                <button 
+                                                    className="btn btn-danger btn-small"
+                                                    onClick={() => deleteOrder(order.id)}
+                                                >
+                                                    🗑️ Delete
+                                                </button>
+                                            </div>
+
+                                            <div className="notes-section">
+                                                <strong>Internal Notes (private):</strong>
+                                                {editingNotes[order.id] ? (
+                                                    <div>
+                                                        <textarea
+                                                            className="notes-textarea"
+                                                            rows="3"
+                                                            value={internalNotes[order.id] || ''}
+                                                            onChange={(e) => setInternalNotes(prev => ({
+                                                                ...prev,
+                                                                [order.id]: e.target.value
+                                                            }))}
+                                                            placeholder="Add internal notes (customer won't see these)..."
+                                                        />
+                                                        <div style={{marginTop: '8px', display: 'flex', gap: '8px'}}>
+                                                            <button 
+                                                                className="btn btn-success btn-small"
+                                                                onClick={() => saveInternalNotes(order.id)}
+                                                            >
+                                                                Save Notes
+                                                            </button>
+                                                            <button 
+                                                                className="btn btn-danger btn-small"
+                                                                onClick={() => setEditingNotes(prev => ({
+                                                                    ...prev,
+                                                                    [order.id]: false
+                                                                }))}
+                                                            >
+                                                                Cancel
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                ) : (
+                                                    <div>
+                                                        <p style={{marginTop: '8px', color: '#666', fontSize: '14px'}}>
+                                                            {internalNotes[order.id] || 'No internal notes yet'}
+                                                        </p>
+                                                        <button 
+                                                            className="btn btn-info btn-small"
+                                                            style={{marginTop: '8px'}}
+                                                            onClick={() => setEditingNotes(prev => ({
+                                                                ...prev,
+                                                                [order.id]: true
+                                                            }))}
+                                                        >
+                                                            ✏️ Edit Notes
+                                                        </button>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+                                    );
+                                })
+                            )}
+                        </div>
+                    )}
+
+                    {activeTab === 'inventory' && (
+                        <div className="orders-container">
+                            <h2 style={{marginBottom: '20px', color: '#1e5a96'}}>
+                                Shopping List (Unpurchased Orders Only)
+                            </h2>
+                            {inventory.length === 0 ? (
+                                <p style={{textAlign: 'center', padding: '40px', color: '#666'}}>
+                                    All orders have been purchased ✓
+                                </p>
+                            ) : (
+                                <table className="inventory-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Item Name</th>
+                                            <th>Description</th>
+                                            <th>Total Quantity Needed</th>
+                                            <th>Unit Price</th>
+                                            <th>Total Cost</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {inventory.map((item, idx) => (
+                                            <tr key={idx}>
+                                                <td><strong>{item.name}</strong></td>
+                                                <td>{item.description}</td>
+                                                <td><strong style={{color: '#1e5a96', fontSize: '16px'}}>{item.quantity}</strong></td>
+                                                <td>{formatPrice(item.price)}</td>
+                                                <td><strong>{formatPrice(item.price * item.quantity)}</strong></td>
+                                            </tr>
+                                        ))}
+                                        <tr style={{background: '#e8f4f8', fontWeight: 'bold'}}>
+                                            <td colSpan="4" style={{textAlign: 'right', padding: '15px'}}>
+                                                Total Purchase Amount:
+                                            </td>
+                                            <td style={{fontSize: '18px', color: '#1e5a96'}}>
+                                                {formatPrice(inventory.reduce((sum, item) => sum + (item.price * item.quantity), 0))}
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            )}
+                        </div>
+                    )}
+                </div>
+            );
+        }
+
+        ReactDOM.render(<AdminDashboard />, document.getElementById('root'));
+    </script>
+</body>
+</html>

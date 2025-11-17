@@ -1,0 +1,864 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Deep Clean - Order Supplies</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #1e5a96 0%, #0d3d66 100%);
+            color: white;
+            padding: 30px 20px;
+            text-align: center;
+        }
+        
+        .logo {
+            max-width: 150px;
+            margin-bottom: 15px;
+            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));
+        }
+        
+        .header h1 {
+            font-size: 28px;
+            margin-bottom: 8px;
+        }
+        
+        .header p {
+            opacity: 0.9;
+            font-size: 14px;
+        }
+        
+        .content {
+            padding: 30px 20px;
+        }
+        
+        .form-group {
+            margin-bottom: 25px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 600;
+            font-size: 14px;
+        }
+        
+        .required {
+            color: #dc3545;
+        }
+        
+        .form-group input,
+        .form-group textarea,
+        .form-group select {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 15px;
+            transition: all 0.3s;
+        }
+        
+        .form-group input:focus,
+        .form-group textarea:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #1e5a96;
+            box-shadow: 0 0 0 3px rgba(30, 90, 150, 0.1);
+        }
+        
+        .form-group input.error,
+        .form-group textarea.error {
+            border-color: #dc3545;
+        }
+        
+        .error-text {
+            color: #dc3545;
+            font-size: 13px;
+            margin-top: 5px;
+        }
+        
+        .helper-text {
+            color: #666;
+            font-size: 13px;
+            margin-top: 5px;
+        }
+        
+        .category {
+            margin-bottom: 30px;
+        }
+        
+        .category-title {
+            color: #1e5a96;
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 15px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid #1e5a96;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .collapse-btn {
+            background: none;
+            border: none;
+            color: #1e5a96;
+            cursor: pointer;
+            font-size: 20px;
+            padding: 0 10px;
+        }
+        
+        .product-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            transition: all 0.2s;
+        }
+        
+        .product-item:hover {
+            background: #e9ecef;
+        }
+        
+        .product-info {
+            flex: 1;
+        }
+        
+        .product-name {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 3px;
+        }
+        
+        .product-description {
+            font-size: 13px;
+            color: #666;
+        }
+        
+        .product-price {
+            color: #1e5a96;
+            font-weight: 700;
+            margin: 0 15px;
+            min-width: 100px;
+            text-align: right;
+        }
+        
+        .quantity-input {
+            width: 70px;
+            padding: 8px;
+            border: 2px solid #ddd;
+            border-radius: 6px;
+            text-align: center;
+            font-weight: 600;
+        }
+        
+        .quantity-input:focus {
+            border-color: #1e5a96;
+            outline: none;
+        }
+        
+        .submit-btn {
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(135deg, #1e5a96 0%, #0d3d66 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: transform 0.2s;
+            margin-top: 20px;
+        }
+        
+        .submit-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(30, 90, 150, 0.3);
+        }
+        
+        .submit-btn:active:not(:disabled) {
+            transform: translateY(0);
+        }
+        
+        .submit-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        
+        .order-summary {
+            background: #e8f4f8;
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 20px;
+            position: sticky;
+            top: 20px;
+        }
+        
+        .order-summary h3 {
+            color: #1e5a96;
+            margin-bottom: 15px;
+        }
+        
+        .summary-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #ccc;
+        }
+        
+        .summary-total {
+            font-size: 18px;
+            font-weight: 700;
+            color: #1e5a96;
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 2px solid #1e5a96;
+        }
+        
+        .success-message {
+            background: #d4edda;
+            color: #155724;
+            padding: 30px;
+            border-radius: 8px;
+            text-align: center;
+            margin: 20px 0;
+        }
+        
+        .success-message h2 {
+            margin-bottom: 15px;
+            font-size: 24px;
+        }
+        
+        .success-message p {
+            margin: 10px 0;
+            font-size: 16px;
+        }
+        
+        .success-message .order-number {
+            background: white;
+            padding: 15px;
+            border-radius: 6px;
+            margin: 20px 0;
+            font-weight: 700;
+            font-size: 18px;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+        
+        .error-message {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        
+        .search-box {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 15px;
+        }
+        
+        .track-order-link {
+            text-align: center;
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 2px solid #e0e0e0;
+        }
+        
+        .track-order-link a {
+            color: #1e5a96;
+            text-decoration: none;
+            font-weight: 600;
+        }
+        
+        .track-order-link a:hover {
+            text-decoration: underline;
+        }
+        
+        @media (max-width: 600px) {
+            .product-item {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            
+            .product-price {
+                margin: 10px 0;
+            }
+            
+            .quantity-input {
+                width: 100%;
+                margin-top: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        // Configuration - REPLACE WITH YOUR VALUES
+        const CONFIG = {
+            SUPABASE_URL: 'https://okbevpzlidfnizveqiui.supabase.co',
+            SUPABASE_ANON_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9rYmV2cHpsaWRmbml6dmVxaXVpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjMzNTQ5NjYsImV4cCI6MjA3ODkzMDk2Nn0.S1qk8T1ZAqGuPvcd9HKFio1-YBSZzCgBgMOlCEp98-4',
+            MIN_DELIVERY_DAYS: 2, // Minimum days from now for delivery
+            MAX_ORDER_ATTEMPTS: 3, // Rate limiting
+            PHONE_REGEX: /^(0?3|0?7|0?8|0?9|03|07|08|09|70|71|76|78|79|81)\s?\d{3}\s?\d{3}$/
+        };
+
+        // Initialize Supabase (FIXED)
+        const { createClient } = supabase;
+        const supabaseClient = createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY);
+
+        const PRODUCTS = {
+  "categories": [
+    {
+      "name": "Cleaning Tools & Implements",
+      "items": [
+        {"id": "sponge-5", "name": "Sponge - لبفة", "description": "5 per box (small)", "price": 75000},
+        {"id": "sponge-3", "name": "Sponge - لبفة", "description": "3 per box (small)", "price": 50000},
+        {"id": "sponge-2", "name": "Sponge - لبفة", "description": "2 per box (large)", "price": 50000},
+        {"id": "metal-wire-soft", "name": "Metal wire - سيف ناعم", "description": "", "price": 50000},
+        {"id": "metal-wire-rough", "name": "Metal wire - سيف خشن", "description": "", "price": 50000},
+        {"id": "mop-head-45", "name": "Mop head - رأس قطاطة", "description": "45 cm", "price": 60000},
+        {"id": "mop-head-50", "name": "Mop head - رأس قطاطة", "description": "50 cm", "price": 80000},
+        {"id": "mop-stick", "name": "Mop stick - عصى قطاطة", "description": "", "price": 50000},
+        {"id": "sink-wiper", "name": "Kitchen sink wiper - قحاطة مجلى", "description": "", "price": 50000},
+        {"id": "sink-brush", "name": "Kitchen sink brush - فرشاية مجلى", "description": "", "price": 50000},
+        {"id": "sink-corner", "name": "Sink corner - زاوية مجلى", "description": "", "price": 50000},
+        {"id": "dustpan-metal", "name": "Metal Dustpan - مجرود جديد", "description": "", "price": 100000},
+        {"id": "dustpan-brush", "name": "Small brush + dustpan - مجرود + مكنسة", "description": "", "price": 80000},
+        {"id": "broom-medium", "name": "Medium plastic broom - مكنسة بلاستيك", "description": "", "price": 120000},
+        {"id": "broom-long", "name": "Long smooth broom - مكنسة ناعمة طويلة", "description": "", "price": 150000},
+        {"id": "floor-mops", "name": "Floor mops - مساحج", "description": "", "price": 50000},
+        {"id": "laundry-tongs-wood", "name": "Laundry tongs - ملاقط خشب", "description": "20 per pack - wood", "price": 75000},
+        {"id": "laundry-tongs-plastic", "name": "Laundry tongs - ملاقط بلاستيك", "description": "20 per pack - plastic", "price": 50000}
+      ]
+    },
+    {
+      "name": "Personal Hygiene & Care",
+      "items": [
+        {"id": "shampoo-melissa", "name": "Shampoo Melissa 2 in 1", "description": "1000 ml", "price": 150000},
+        {"id": "shower-gel-melissa", "name": "Shower gel Melissa", "description": "1000 ml", "price": 150000},
+        {"id": "shower-sponge-natural", "name": "Natural Shower sponge - ليفة حمام طبيعية", "description": "Large", "price": 200000},
+        {"id": "shower-sponge-regular", "name": "Shower sponge - ليفة حمام", "description": "Regular size", "price": 50000},
+        {"id": "coton-tige-100", "name": "Coton-tige", "description": "100 sticks per bag", "price": 20000},
+        {"id": "coton-tige-50", "name": "Coton-tige", "description": "50 sticks per bag", "price": 10000},
+        {"id": "toothbrush", "name": "Toothbrush", "description": "", "price": 50000},
+        {"id": "toothpaste", "name": "Toothpaste", "description": "70 ml - Colgate", "price": 70000},
+        {"id": "shaving-razor", "name": "Shaving razor", "description": "1 razor - 3 blades", "price": 50000},
+        {"id": "nail-clipper-regular", "name": "Nail clipper - مقص صغير", "description": "Regular size", "price": 50000},
+        {"id": "nail-clipper-small", "name": "Nail clipper - مقص صغير", "description": "Small", "price": 30000},
+        {"id": "soap-ghar", "name": "Soap bar - صابون غار", "description": "Ghar", "price": 50000},
+        {"id": "soap-colored", "name": "Soap bar - صابون ملون", "description": "Colored", "price": 25000},
+        {"id": "soap-elvan", "name": "Soap bar - صابون ملون", "description": "Elvan- 5 per bag", "price": 75000},
+        {"id": "handsoap", "name": "Handsoap liquid", "description": "", "price": 80000}
+      ]
+    },
+    {
+      "name": "Household Linens & Textiles",
+      "items": [
+        {"id": "kitchen-cloth-50x70", "name": "Kitchen cloth - شقف مطبخ", "description": "50x70", "price": 150000},
+        {"id": "kitchen-cloth-60x40", "name": "Kitchen cloth - شقف مطبخ", "description": "60*40", "price": 100000},
+        {"id": "kitchen-cloth-45x35", "name": "Kitchen cloth - شقف مطبخ", "description": "45*35", "price": 100000},
+        {"id": "bathroom-towel", "name": "Bathroom towel - شقف صغار", "description": "30*30", "price": 100000},
+        {"id": "tissues", "name": "Tissues - كلينكس", "description": "1 kg - Nervana", "price": 275000}
+      ]
+    },
+    {
+      "name": "Laundry Supplies",
+      "items": [
+        {"id": "clothes-whitener", "name": "Clothes whitener - مبيض غسيل - نيلة", "description": "1 piece", "price": 20000},
+        {"id": "al-wazir-powder", "name": "Al Wazir laundry powder - الوزير بودرة", "description": "600 g", "price": 90000}
+      ]
+    },
+    {
+      "name": "Bulk Liquids & Detergents (4L)",
+      "items": [
+        {"id": "javel-odex", "name": "Javel - odex", "description": "4 L", "price": 200000},
+        {"id": "floor-cleaner", "name": "Floor cleaner", "description": "4 L", "price": 200000},
+        {"id": "glass-cleaner", "name": "Glass cleaner", "description": "4 L", "price": 200000},
+        {"id": "dishwashing-liquid-4l", "name": "Dishwashing liquid", "description": "4 L", "price": 300000},
+        {"id": "dettol", "name": "Dettol", "description": "4 L", "price": 300000},
+        {"id": "flash", "name": "Flash", "description": "4 L", "price": 300000},
+        {"id": "laundry-detergent", "name": "Laundry detergent", "description": "4 L", "price": 300000},
+        {"id": "fabric-softener", "name": "Fabric softener", "description": "4 L", "price": 300000},
+        {"id": "shower-gel-4l", "name": "Shower gel", "description": "4 L", "price": 300000},
+        {"id": "hand-soap-4l", "name": "Hand soap", "description": "4 L", "price": 300000},
+        {"id": "shampoo-4l", "name": "Shampoo", "description": "4 L", "price": 300000},
+        {"id": "degreaser", "name": "Degreaser - للشحوم والبقع الصعبة", "description": "4 L", "price": 500000}
+      ]
+    },
+    {
+      "name": "Kitchen & Household Consumables",
+      "items": [
+        {"id": "toilet-bags-small", "name": "Toilet bags small - اكياس زبالة صغار", "description": "12 per roll", "price": 40000},
+        {"id": "toilet-bags-large", "name": "Toilet bags large - اكياس زبالة كبار", "description": "12 per roll", "price": 80000},
+        {"id": "toilet-bags-xl", "name": "Toilet bags XL - اكياس زبالة كبار", "description": "6 per roll", "price": 40000},
+        {"id": "freezing-bags", "name": "Freezing bags - كياس تفريز", "description": "", "price": 80000},
+        {"id": "sandwich-bags", "name": "Sandwich bags - كياس سندويش", "description": "", "price": 50000},
+        {"id": "butter-paper", "name": "Butter paper - ورق زبدة", "description": "5m roll", "price": 80000},
+        {"id": "aluminum-foil", "name": "Aluminum foil", "description": "5m roll", "price": 50000},
+        {"id": "rambo-degreaser", "name": "Rambo degreaser - للشحوم والبقع الصعبة", "description": "750 ml", "price": 120000},
+        {"id": "flash-1l", "name": "Flash - فلاش", "description": "1 L", "price": 100000},
+        {"id": "dishwashing-liquid-700ml", "name": "Dishwashing liquid", "description": "700 ml", "price": 80000},
+        {"id": "hair-gel", "name": "Hair Gel", "description": "Elsada - small", "price": 50000},
+        {"id": "halek", "name": "Halek - هالك", "description": "100 g", "price": 50000},
+        {"id": "air-freshner", "name": "Air freshner - معطر جو", "description": "", "price": 100000}
+      ]
+    }
+  ]
+};
+
+        function OrderForm() {
+            const [customerName, setCustomerName] = useState('');
+            const [phoneNumber, setPhoneNumber] = useState('');
+            const [deliveryAddress, setDeliveryAddress] = useState('');
+            const [deliveryDate, setDeliveryDate] = useState('');
+            const [notes, setNotes] = useState('');
+            const [quantities, setQuantities] = useState({});
+            const [submitted, setSubmitted] = useState(false);
+            const [submitting, setSubmitting] = useState(false);
+            const [error, setError] = useState('');
+            const [orderNumber, setOrderNumber] = useState('');
+            const [collapsedCategories, setCollapsedCategories] = useState({});
+            const [searchTerm, setSearchTerm] = useState('');
+            const [validationErrors, setValidationErrors] = useState({});
+            const [attemptCount, setAttemptCount] = useState(0);
+
+            // Get minimum delivery date
+            const getMinDeliveryDate = () => {
+                const date = new Date();
+                date.setDate(date.getDate() + CONFIG.MIN_DELIVERY_DAYS);
+                return date.toISOString().split('T')[0];
+            };
+
+            const validatePhone = (phone) => {
+                return CONFIG.PHONE_REGEX.test(phone.replace(/\s/g, ''));
+            };
+
+            const validateForm = () => {
+                const errors = {};
+                
+                if (!customerName.trim()) {
+                    errors.customerName = 'Name is required';
+                }
+                
+                if (!phoneNumber.trim()) {
+                    errors.phoneNumber = 'Phone number is required';
+                } else if (!validatePhone(phoneNumber)) {
+                    errors.phoneNumber = 'Invalid Lebanese phone number (e.g., 03 123 456)';
+                }
+                
+                if (!deliveryAddress.trim()) {
+                    errors.deliveryAddress = 'Delivery address is required';
+                }
+                
+                if (!deliveryDate) {
+                    errors.deliveryDate = 'Delivery date is required';
+                } else if (deliveryDate < getMinDeliveryDate()) {
+                    errors.deliveryDate = `Delivery must be at least ${CONFIG.MIN_DELIVERY_DAYS} days from now`;
+                }
+                
+                const orderedItems = getOrderedItems();
+                if (orderedItems.length === 0) {
+                    errors.items = 'Please select at least one item';
+                }
+                
+                setValidationErrors(errors);
+                return Object.keys(errors).length === 0;
+            };
+
+            const updateQuantity = (productId, value) => {
+                const qty = parseInt(value) || 0;
+                if (qty >= 0 && qty <= 9999) { // Max quantity limit
+                    setQuantities(prev => ({
+                        ...prev,
+                        [productId]: qty
+                    }));
+                }
+            };
+
+            const calculateTotal = () => {
+                let total = 0;
+                PRODUCTS.categories.forEach(category => {
+                    category.items.forEach(item => {
+                        const qty = quantities[item.id] || 0;
+                        total += qty * item.price;
+                    });
+                });
+                return total;
+            };
+
+            const getOrderedItems = () => {
+                const items = [];
+                PRODUCTS.categories.forEach(category => {
+                    category.items.forEach(item => {
+                        const qty = quantities[item.id] || 0;
+                        if (qty > 0) {
+                            items.push({
+                                product_id: item.id,
+                                product_name: item.name,
+                                description: item.description,
+                                price: item.price,
+                                quantity: qty,
+                                subtotal: qty * item.price
+                            });
+                        }
+                    });
+                });
+                return items;
+            };
+
+            const handleSubmit = async (e) => {
+                e.preventDefault();
+                
+                // Rate limiting check
+                if (attemptCount >= CONFIG.MAX_ORDER_ATTEMPTS) {
+                    setError('Too many attempts. Please wait a few minutes and try again.');
+                    return;
+                }
+                
+                if (!validateForm()) {
+                    setError('Please fix the errors above');
+                    return;
+                }
+
+                setSubmitting(true);
+                setError('');
+                setAttemptCount(prev => prev + 1);
+
+                try {
+                    const orderedItems = getOrderedItems();
+                    
+                    // Insert order with retry logic
+                    let retryCount = 0;
+                    let orderData = null;
+                    
+                    while (retryCount < 3 && !orderData) {
+                        try {
+                            const { data, error: orderError } = await supabaseClient
+                                .from('orders')
+                                .insert([{
+                                    customer_name: customerName.trim(),
+                                    phone_number: phoneNumber.trim(),
+                                    delivery_address: deliveryAddress.trim(),
+                                    delivery_date: deliveryDate,
+                                    notes: notes.trim(),
+                                    total_amount: calculateTotal(),
+                                    status_purchased: false,
+                                    status_delivered: false,
+                                    status_paid: false
+                                }])
+                                .select();
+
+                            if (orderError) throw orderError;
+                            orderData = data;
+                        } catch (err) {
+                            retryCount++;
+                            if (retryCount >= 3) throw err;
+                            await new Promise(resolve => setTimeout(resolve, 1000 * retryCount));
+                        }
+                    }
+
+                    const orderId = orderData[0].id;
+                    const formattedOrderNumber = `DC-${orderId.toString().padStart(6, '0')}`;
+                    setOrderNumber(formattedOrderNumber);
+
+                    // Insert order items
+                    const itemsWithOrderId = orderedItems.map(item => ({
+                        ...item,
+                        order_id: orderId
+                    }));
+
+                    const { error: itemsError } = await supabaseClient
+                        .from('order_items')
+                        .insert(itemsWithOrderId);
+
+                    if (itemsError) throw itemsError;
+
+                    setSubmitted(true);
+                    
+                    // Reset form after 10 seconds
+                    setTimeout(() => {
+                        setSubmitted(false);
+                        setCustomerName('');
+                        setPhoneNumber('');
+                        setDeliveryAddress('');
+                        setDeliveryDate('');
+                        setNotes('');
+                        setQuantities({});
+                        setOrderNumber('');
+                        setAttemptCount(0);
+                    }, 10000);
+
+                } catch (err) {
+                    console.error('Error submitting order:', err);
+                    setError('Failed to submit order. Please check your internet connection and try again. If the problem persists, please call us directly at 71 18 28 48.');
+                } finally {
+                    setSubmitting(false);
+                }
+            };
+
+            const formatPrice = (price) => {
+                return new Intl.NumberFormat('en-US').format(price) + ' LL';
+            };
+
+            const toggleCategory = (categoryName) => {
+                setCollapsedCategories(prev => ({
+                    ...prev,
+                    [categoryName]: !prev[categoryName]
+                }));
+            };
+
+            const filteredProducts = searchTerm ? 
+                PRODUCTS.categories.map(category => ({
+                    ...category,
+                    items: category.items.filter(item => 
+                        item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                        item.description.toLowerCase().includes(searchTerm.toLowerCase())
+                    )
+                })).filter(category => category.items.length > 0) 
+                : PRODUCTS.categories;
+
+            const orderedItems = getOrderedItems();
+
+            if (submitted) {
+                return (
+                    <div className="container">
+                        <div className="header">
+                            <h1>Deep Clean</h1>
+                            <p>Cleaning Supplies</p>
+                        </div>
+                        <div className="content">
+                            <div className="success-message">
+                                <h2>✓ Order Submitted Successfully!</h2>
+                                <div className="order-number">
+                                    Order Number: {orderNumber}
+                                </div>
+                                <p>We have received your order and will contact you soon on <strong>{phoneNumber}</strong></p>
+                                <p><strong>Total: {formatPrice(calculateTotal())}</strong></p>
+                                <p><strong>Delivery Date: {deliveryDate}</strong></p>
+                                <p style={{marginTop: '20px', fontSize: '14px'}}>
+                                    You will receive a confirmation call within 24 hours.
+                                </p>
+                                <p style={{marginTop: '10px', fontSize: '14px', color: '#666'}}>
+                                    Please save your order number for reference.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                );
+            }
+
+            return (
+                <div className="container">
+                    <div className="header">
+                        <h1>Deep Clean</h1>
+                        <p>Cleaning Supplies Order Form</p>
+                    </div>
+                    
+                    <div className="content">
+                        <form onSubmit={handleSubmit}>
+                            <div className="form-group">
+                                <label>Customer Name <span className="required">*</span></label>
+                                <input 
+                                    type="text" 
+                                    value={customerName}
+                                    onChange={(e) => setCustomerName(e.target.value)}
+                                    className={validationErrors.customerName ? 'error' : ''}
+                                    placeholder="Enter your full name"
+                                    maxLength="100"
+                                />
+                                {validationErrors.customerName && (
+                                    <div className="error-text">{validationErrors.customerName}</div>
+                                )}
+                            </div>
+
+                            <div className="form-group">
+                                <label>Phone Number <span className="required">*</span></label>
+                                <input 
+                                    type="tel" 
+                                    value={phoneNumber}
+                                    onChange={(e) => setPhoneNumber(e.target.value)}
+                                    className={validationErrors.phoneNumber ? 'error' : ''}
+                                    placeholder="e.g., 03 123 456 or 71 123 456"
+                                />
+                                {validationErrors.phoneNumber && (
+                                    <div className="error-text">{validationErrors.phoneNumber}</div>
+                                )}
+                                <div className="helper-text">Lebanese mobile number format</div>
+                            </div>
+
+                            <div className="form-group">
+                                <label>Delivery Address <span className="required">*</span></label>
+                                <textarea 
+                                    value={deliveryAddress}
+                                    onChange={(e) => setDeliveryAddress(e.target.value)}
+                                    className={validationErrors.deliveryAddress ? 'error' : ''}
+                                    placeholder="Building name/number, Street, Area, City"
+                                    rows="3"
+                                    maxLength="500"
+                                />
+                                {validationErrors.deliveryAddress && (
+                                    <div className="error-text">{validationErrors.deliveryAddress}</div>
+                                )}
+                            </div>
+
+                            <div className="form-group">
+                                <label>Preferred Delivery Date <span className="required">*</span></label>
+                                <input 
+                                    type="date" 
+                                    value={deliveryDate}
+                                    onChange={(e) => setDeliveryDate(e.target.value)}
+                                    className={validationErrors.deliveryDate ? 'error' : ''}
+                                    min={getMinDeliveryDate()}
+                                />
+                                {validationErrors.deliveryDate && (
+                                    <div className="error-text">{validationErrors.deliveryDate}</div>
+                                )}
+                                <div className="helper-text">Minimum {CONFIG.MIN_DELIVERY_DAYS} days from today</div>
+                            </div>
+
+                            <div className="form-group">
+                                <label>Additional Notes</label>
+                                <textarea 
+                                    value={notes}
+                                    onChange={(e) => setNotes(e.target.value)}
+                                    placeholder="Any special requests or delivery instructions..."
+                                    rows="2"
+                                    maxLength="500"
+                                />
+                            </div>
+
+                            {error && (
+                                <div className="error-message">
+                                    {error}
+                                </div>
+                            )}
+
+                            {validationErrors.items && (
+                                <div className="error-message">
+                                    {validationErrors.items}
+                                </div>
+                            )}
+
+                            <h2 style={{marginTop: '30px', marginBottom: '15px', color: '#1e5a96'}}>Select Products</h2>
+                            
+                            <input 
+                                type="text"
+                                className="search-box"
+                                placeholder="🔍 Search products..."
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                            />
+
+                            {filteredProducts.map((category, idx) => (
+                                <div key={idx} className="category">
+                                    <div className="category-title">
+                                        <span>{category.name} ({category.items.length})</span>
+                                        <button 
+                                            type="button"
+                                            className="collapse-btn"
+                                            onClick={() => toggleCategory(category.name)}
+                                        >
+                                            {collapsedCategories[category.name] ? '+' : '−'}
+                                        </button>
+                                    </div>
+                                    {!collapsedCategories[category.name] && category.items.map(item => (
+                                        <div key={item.id} className="product-item">
+                                            <div className="product-info">
+                                                <div className="product-name">{item.name}</div>
+                                                {item.description && (
+                                                    <div className="product-description">{item.description}</div>
+                                                )}
+                                            </div>
+                                            <div className="product-price">{formatPrice(item.price)}</div>
+                                            <input 
+                                                type="number"
+                                                min="0"
+                                                max="9999"
+                                                className="quantity-input"
+                                                value={quantities[item.id] || ''}
+                                                onChange={(e) => updateQuantity(item.id, e.target.value)}
+                                                placeholder="0"
+                                            />
+                                        </div>
+                                    ))}
+                                </div>
+                            ))}
+
+                            {orderedItems.length > 0 && (
+                                <div className="order-summary">
+                                    <h3>Order Summary ({orderedItems.length} items)</h3>
+                                    {orderedItems.map(item => (
+                                        <div key={item.product_id} className="summary-item">
+                                            <span>{item.product_name} x{item.quantity}</span>
+                                            <span>{formatPrice(item.subtotal)}</span>
+                                        </div>
+                                    ))}
+                                    <div className="summary-total">
+                                        <div style={{display: 'flex', justifyContent: 'space-between'}}>
+                                            <span>Total:</span>
+                                            <span>{formatPrice(calculateTotal())}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
+                            <button type="submit" className="submit-btn" disabled={submitting}>
+                                {submitting ? 'Submitting Order...' : 'Submit Order'}
+                            </button>
+                        </form>
+
+                        <div className="track-order-link">
+                            <a href="track.html">Track Your Order</a>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        ReactDOM.render(<OrderForm />, document.getElementById('root'));
+    </script>
+</body>
+</html>
